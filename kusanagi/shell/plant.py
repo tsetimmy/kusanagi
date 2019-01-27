@@ -150,7 +150,7 @@ class PlantDraw(object):
         self.ax.set_ylim([-1.5, 1.5])
         self.ax.set_aspect('equal', 'datalim')
         self.ax.grid(True)
-        self.fig.canvas.draw()
+        self.fig.canvas.update()
         self.bg = self.fig.canvas.copy_from_bbox(self.ax.bbox)
         self.cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
         self.init_artists()

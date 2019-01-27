@@ -130,8 +130,7 @@ class Pendulum(plant.ODEPlant):
         # pointer to the class that will draw the state of the carpotle system
         self.renderer = None
 
-        # 4 state dims (x ,x_dot, theta_dot, theta)
-        o_lims = np.array([10 for i in range(4)])
+        o_lims = np.array([np.inf for i in range(2)])
         self.observation_space = spaces.Box(-o_lims, o_lims)
         # 1 action dim (x_force)
         a_lims = np.array([np.finfo(np.float).max for i in range(1)])

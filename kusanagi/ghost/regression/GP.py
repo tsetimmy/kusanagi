@@ -57,6 +57,7 @@ class GP(BaseRegressor):
         self.Y_var = None
         self.X_cov = None
         self.kernel_func = None
+        self.Xm = None#Added to prevent erroring out??
 
         # name of this class for printing command line output and saving
         self.name = name

@@ -337,10 +337,10 @@ if __name__ == '__main__':
     params, loss_kwargs, polopt_kwargs, extra_inps = scenario_params
     if args.horizon:
         params['min_steps'] = args.horizon
-    # init environment
-    env = pendulum.Pendulum(**params['plant'])
     # init cost model
     cost = partial(pendulum.pendulum_loss, **params['cost'])
+    # init environment
+    env = pendulum.Pendulum(loss_func=cost, **params['plant'])
 
     # initialize output directory
     odir = args.output_folder

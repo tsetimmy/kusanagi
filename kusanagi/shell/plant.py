@@ -114,7 +114,7 @@ class ODEPlant(Plant):
         cost = None
         if self.loss_func is not None:
             cost = self.loss_func(np.array(self.state)[None, :])
-        state, t = self.get_state()
+        state, t = self.get_state(noisy=False)
         return state, cost, False, dict(t=t)
 
     def dynamics(self, *args, **kwargs):
@@ -150,7 +150,7 @@ class PlantDraw(object):
         self.ax.set_ylim([-1.5, 1.5])
         self.ax.set_aspect('equal', 'datalim')
         self.ax.grid(True)
-        self.fig.canvas.update()
+        self.fig.canvas.draw()
         self.bg = self.fig.canvas.copy_from_bbox(self.ax.bbox)
         self.cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
         self.init_artists()
@@ -207,7 +207,7 @@ class PlantDraw(object):
             self.fig.canvas.restore_region(self.bg)
             for artist in updts:
                 self.ax.draw_artist(artist)
-            self.fig.canvas.update()
+            self.fig.canvas.draw()
             # sleep to guarantee the desired frame rate
             exec_time = time() - self.exec_time
             plt.waitforbuttonpress(max(self.dt-exec_time, 1e-9))

@@ -15,8 +15,14 @@ from kusanagi import utils
 
 def default_params():
     # setup learner parameters
-    angi = [0]
-    x0 = np.array([0, 0])
+    high = np.array([np.pi, 1.])
+    th, thdot = np.random.uniform(low=-high, high=high)
+
+
+    angi = []
+    #angi = None
+    #x0 = np.array([0, 0])
+    x0 = np.array([np.cos(th), np.sin(th), thdot])
     S0 = np.eye(len(x0))*(0.2**2)
     p0 = utils.distributions.Gaussian(x0, S0)
     x0a, S0a = utils.gTrig2_np(x0[None, :], np.array(S0)[None, :, :],
@@ -39,7 +45,8 @@ def default_params():
     policy_params['state0_dist'] = p0
     policy_params['angle_dims'] = angi
     policy_params['n_inducing'] = 20
-    policy_params['maxU'] = [2.5]
+    #policy_params['maxU'] = [2.5]
+    policy_params['maxU'] = [2]
 
     # dynamics model parameters
     dynmodel_params = {}
@@ -50,7 +57,8 @@ def default_params():
     # cost function parameters
     cost_params = {}
     cost_params['angle_dims'] = angi
-    cost_params['target'] = [np.pi, 0]
+    #cost_params['target'] = [np.pi, 0]
+    cost_params['target'] = [1., 0., 0.]
     cost_params['cw'] = 0.5
     cost_params['expl'] = 0.0
     cost_params['pole_length'] = plant_params['pole_length']
@@ -66,9 +74,12 @@ def default_params():
     params = {}
     params['state0_dist'] = p0
     params['angle_dims'] = angi
-    params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    params['min_steps'] = 200
+    params['max_steps'] = 200
     params['discount'] = 1.0                           # discount factor
+
     params['plant'] = plant_params
     params['policy'] = policy_params
     params['dynamics_model'] = dynmodel_params
@@ -87,15 +98,21 @@ def pendulum_loss(mx, Sx,
     # size of target vector (and mx) after replacing angles with their
     # (sin, cos) representation:
     # [x1,x2,..., angle,...,xn] -> [x1,x2,...,xn, sin(angle), cos(angle)]
-    Da = np.array(target).size + len(angle_dims)
+    #Da = np.array(target).size + len(angle_dims)
+
+    target = np.array([1., 0., 0.])
+    angle_dims = None
+    Q = np.eye(len(target))
 
     # build cost scaling function
+    '''
     Q = np.zeros((Da, Da))
     Q[0, 0] = 1
     Q[0, -2] = pole_length
     Q[-2, 0] = pole_length
     Q[-2, -2] = pole_length**2
     Q[-1, -1] = pole_length**2
+    '''
 
     return cost.distance_based_cost(
         mx, Sx, target, Q, cw, angle_dims=angle_dims, *args, **kwargs)
@@ -120,21 +137,34 @@ class Pendulum(plant.ODEPlant):
         self.b = friction
         self.g = gravity
 
+        '''
         # initial state
         if state0_dist is None:
             self.state0_dist = utils.distributions.Gaussian(
                 [0, 0, 0, 0], (0.1**2)*np.eye(4))
         else:
             self.state0_dist = state0_dist
+        '''
 
         # pointer to the class that will draw the state of the carpotle system
-        self.renderer = None
+        #self.renderer = None
 
+        self.max_speed = 8.
+        self.max_torque = 2.
+        self.dt = .05
+        #self.viewer = None
+
+        high = np.array([1., 1., self.max_speed])
+        self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,))
+        self.observation_space = spaces.Box(low=-high, high=high)
+
+        '''
         o_lims = np.array([np.inf for i in range(2)])
         self.observation_space = spaces.Box(-o_lims, o_lims)
         # 1 action dim (x_force)
         a_lims = np.array([np.finfo(np.float).max for i in range(1)])
         self.action_space = spaces.Box(-a_lims, a_lims)
+        '''
 
     def dynamics(self, t, z):
         l, m, b, g = self.l, self.m, self.b, self.g
@@ -147,10 +177,37 @@ class Pendulum(plant.ODEPlant):
 
         return dz
 
+
+    def step(self,u):
+        th, thdot = self.state # th := theta
+
+        g = 10.
+        m = 1.
+        l = 1.
+        dt = self.dt
+
+        u = np.clip(u, -self.max_torque, self.max_torque)[0]
+        self.last_u = u # for rendering
+        costs = angle_normalize(th)**2 + .1*thdot**2 + .001*(u**2)
+
+        newthdot = thdot + (-3*g/(2*l) * np.sin(th + np.pi) + 3./(m*l**2)*u) * dt
+        newth = th + newthdot*dt
+        newthdot = np.clip(newthdot, -self.max_speed, self.max_speed) #pylint: disable=E1111
+
+        self.state = np.array([newth, newthdot])
+        return self._get_obs(), costs, False, {}
+
     def reset(self):
-        state0 = self.state0_dist()
+        #state0 = self.state0_dist()
+        high = np.array([np.pi, 1.])
+        #self.state = self.np_random.uniform(low=-high, high=high)
+        state0 = np.random.uniform(low=-high, high=high)
         self.set_state(state0)
-        return self.state
+        return self._get_obs()
+    
+    def _get_obs(self):
+        theta, thetadot = self.state
+        return np.array([np.cos(theta), np.sin(theta), thetadot])
 
     def render(self, mode='human', close=False):
         if self.renderer is None:
@@ -163,6 +220,7 @@ class Pendulum(plant.ODEPlant):
             self.renderer.close()
 
 
+'''
 class PendulumDraw(plant.PlantDraw):
     def __init__(self, pendulum_plant, refresh_period=(1.0/240),
                  name='PendulumDraw'):
@@ -200,3 +258,7 @@ class PendulumDraw(plant.PlantDraw):
         self.mass_circle.center = (mass_x, mass_y)
 
         return (self.pole_line, self.mass_circle)
+'''
+
+def angle_normalize(x):
+    return (((x+np.pi) % (2*np.pi)) - np.pi)

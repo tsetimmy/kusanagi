@@ -342,6 +342,10 @@ if __name__ == '__main__':
     # init environment
     env = pendulum.Pendulum(loss_func=cost, **params['plant'])
 
+    params['n_rnd'] = 3
+    params['n_opt'] = 200
+    params['n_init'] = 0
+
     # initialize output directory
     odir = args.output_folder
     if args.name is not None:

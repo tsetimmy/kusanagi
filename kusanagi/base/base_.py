@@ -40,6 +40,7 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
     # applying action at time t
     data = []
 
+    scalar_costs = 0.
     # do rollout
     for t in range(max_steps):
         # preprocess state
@@ -54,6 +55,7 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
 
         # apply control and step the env
         x_next, c_t, done, info = env.step(u_t)
+        scalar_costs += c_t
         info['done'] = done
 
         # append to dataset
@@ -71,6 +73,7 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
         x_t = x_next
 
     states, actions, costs, infos = zip(*data)
+    print ('Here is the scalar cost:', scalar_costs)
 
     msg = 'Done. Stopping robot.'
     if all([v is not None for v in costs]):

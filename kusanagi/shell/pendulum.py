@@ -201,8 +201,9 @@ class Pendulum(plant.ODEPlant):
         #state0 = self.state0_dist()
         high = np.array([np.pi, 1.])
         #self.state = self.np_random.uniform(low=-high, high=high)
-        state0 = np.random.uniform(low=-high, high=high)
-        self.set_state(state0)
+        #self.state = state0.copy()
+        self.state = np.random.uniform(low=-high, high=high)
+        #self.set_state(state0)
         return self._get_obs()
     
     def _get_obs(self):

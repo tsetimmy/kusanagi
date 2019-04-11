@@ -94,6 +94,7 @@ class ODEPlant(Plant):
                                                         rtol=rtol)
 
     def set_state(self, state):
+        assert False
         if self.state is None or\
            np.linalg.norm(np.array(state)-np.array(self.state)) > 1e-12:
             # float64 required for the ode integrator

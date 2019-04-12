@@ -6,6 +6,8 @@ from kusanagi.ghost.regression import BNN
 from kusanagi.ghost.control.saturation import sfunc, tanhSat as sat
 from functools import partial
 
+from kusanagi import utils
+
 
 # NN controller
 class NNPolicy(BNN):
@@ -19,6 +21,8 @@ class NNPolicy(BNN):
         self.angle_dims = angle_dims
         self.D = input_dims + len(self.angle_dims)
         self.E = len(maxU)
+
+        self.m_rng = utils.get_mrng()
 
         self.sat_func = None
         if callable(sat_func):
@@ -55,6 +59,7 @@ class NNPolicy(BNN):
         # after whitening the outputs
         return_samples = kwargs.get('return_samples', True)
         kwargs['return_samples'] = True
+        return_samples = False
 
         y, sn = super(NNPolicy, self).predict(x, None, **kwargs)
         if callable(self.sat_func):

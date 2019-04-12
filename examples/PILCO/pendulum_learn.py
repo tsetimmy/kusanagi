@@ -125,7 +125,7 @@ def get_scenario(experiment_id, *args, **kwargs):
             W_init=lasagne.init.GlorotNormal(),
             build_fn=regression.mlp)
         pol = control.NNPolicy(
-            dyn.E, network_spec=pol_spec, **params['policy'])
+            3, network_spec=pol_spec, **params['policy'])
 
     elif experiment_id == 3:
         # mc PILCO with RBF controller and dropout mlp dynamics

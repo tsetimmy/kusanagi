@@ -115,6 +115,13 @@ class ODEPlant(Plant):
         if self.loss_func is not None:
             cost = self.loss_func(np.array(self.state)[None, :])
         state, t = self.get_state()
+        ang = angle_normalize(state[0])
+        if ang >= 0:
+            ang = -(np.pi - ang)
+        else:
+            ang = np.pi + ang
+        cost = ang**2 + .1*state[1]**2 + .001*action[0]**2
+        #print (ang, state[1], action, cost)
         return state, cost, False, dict(t=t)
 
     def dynamics(self, *args, **kwargs):
@@ -207,7 +214,7 @@ class PlantDraw(object):
             self.fig.canvas.restore_region(self.bg)
             for artist in updts:
                 self.ax.draw_artist(artist)
-            self.fig.canvas.update()
+            self.fig.canvas.draw()
             # sleep to guarantee the desired frame rate
             exec_time = time() - self.exec_time
             plt.waitforbuttonpress(max(self.dt-exec_time, 1e-9))
@@ -312,3 +319,7 @@ class LivePlot(PlantDraw):
             self.ax.autoscale_view(tight=True, scalex=True, scaley=True)
 
         return self.lines
+
+
+def angle_normalize(x):
+    return (((x+np.pi) % (2*np.pi)) - np.pi)

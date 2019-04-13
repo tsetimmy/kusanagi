@@ -24,11 +24,14 @@ def default_params():
 
     # plant parameters
     plant_params = {}
-    plant_params['dt'] = 0.1
+    plant_params['dt'] = 0.05
+    #plant_params['dt'] = 0.1
     plant_params['pole_length'] = 1.0
     plant_params['pole_mass'] = 1.0
-    plant_params['friction'] = 0.01
-    plant_params['gravity'] = 9.82
+    plant_params['friction'] = 0.00
+    #plant_params['friction'] = 0.01
+    plant_params['gravity'] = 10.
+    #plant_params['gravity'] = 9.82
     plant_params['state0_dist'] = p0
     plant_params['noise_dist'] = utils.distributions.Gaussian(
         np.zeros((p0.dim,)),
@@ -39,7 +42,8 @@ def default_params():
     policy_params['state0_dist'] = p0
     policy_params['angle_dims'] = angi
     policy_params['n_inducing'] = 20
-    policy_params['maxU'] = [2.5]
+    policy_params['maxU'] = [2.]
+    #policy_params['maxU'] = [2.5]
 
     # dynamics model parameters
     dynmodel_params = {}
@@ -66,8 +70,12 @@ def default_params():
     params = {}
     params['state0_dist'] = p0
     params['angle_dims'] = angi
-    params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+
+    params['min_steps'] = 200
+    params['max_steps'] = 200
+
     params['discount'] = 1.0                           # discount factor
     params['plant'] = plant_params
     params['policy'] = policy_params
@@ -120,6 +128,9 @@ class Pendulum(plant.ODEPlant):
         self.b = friction
         self.g = gravity
 
+        #self.max_torque = 2.
+        #self.max_speed = 8.
+
         # initial state
         if state0_dist is None:
             self.state0_dist = utils.distributions.Gaussian(
@@ -137,6 +148,9 @@ class Pendulum(plant.ODEPlant):
         a_lims = np.array([np.finfo(np.float).max for i in range(1)])
         self.action_space = spaces.Box(-a_lims, a_lims)
 
+        #self.reset()
+
+
     def dynamics(self, t, z):
         l, m, b, g = self.l, self.m, self.b, self.g
         f = self.u if self.u is not None else np.array([0])
@@ -152,6 +166,41 @@ class Pendulum(plant.ODEPlant):
         state0 = self.state0_dist()
         self.set_state(state0)
         return self.state
+
+    '''
+    def step(self,u):
+        if u[0] <= -self.max_torque or u[0] >= self.max_torque:
+            print ('warning: action exeeds torque')
+        th, thdot = self.state_gym # th := theta
+
+        g = 10.
+        m = 1.
+        l = 1.
+        dt = self.dt
+
+        u = np.clip(u, -self.max_torque, self.max_torque)[0]
+        self.last_u = u # for rendering
+        costs = angle_normalize(th)**2 + .1*thdot**2 + .001*(u**2)
+
+        newthdot = thdot + (-3*g/(2*l) * np.sin(th + np.pi) + 3./(m*l**2)*u) * dt
+        newth = th + newthdot*dt
+        if newthdot <= -self.max_speed or newthdot >= self.max_speed:
+            print ('warning: newthdot exceeds max speed')
+        newthdot = np.clip(newthdot, -self.max_speed, self.max_speed) #pylint: disable=E1111
+
+        self.state_gym = np.array([newth, newthdot])
+        theta, thetadot = self.state_gym
+        self.state = np.array([theta+np.pi, thetadot])
+
+        return self._get_obs(), costs, False, {}
+
+
+    def _get_obs(self):
+        return self.state
+        #theta, thetadot = self.state
+        #ret = np.array([theta+np.pi, thetadot])
+        #return ret
+    '''
 
     def render(self, mode='human', close=False):
         if self.renderer is None:
@@ -201,3 +250,6 @@ class PendulumDraw(plant.PlantDraw):
         self.mass_circle.center = (mass_x, mass_y)
 
         return (self.pole_line, self.mass_circle)
+
+
+

@@ -15,12 +15,11 @@ from kusanagi import utils
 
 def default_params():
     # setup learner parameters
-    angi = [0]
+    angi = []
     x0 = np.array([0, 0])
     S0 = np.eye(len(x0))*(0.2**2)
     p0 = utils.distributions.Gaussian(x0, S0)
-    x0a, S0a = utils.gTrig2_np(x0[None, :], np.array(S0)[None, :, :],
-                               angi, len(x0))
+    x0a, S0a = utils.gTrig2_np(x0[None, :], np.array(S0)[None, :, :], angi, len(x0))
 
     # plant parameters
     plant_params = {}
@@ -30,16 +29,15 @@ def default_params():
     plant_params['friction'] = 0.01
     plant_params['gravity'] = 9.82
     plant_params['state0_dist'] = p0
-    plant_params['noise_dist'] = utils.distributions.Gaussian(
-        np.zeros((p0.dim,)),
-        np.diag([0.01,0.1])**2)
+    #plant_params['noise_dist'] = utils.distributions.Gaussian( np.zeros((p0.dim,)), np.diag([0.01,0.1])**2)
 
     # policy parameters
     policy_params = {}
     policy_params['state0_dist'] = p0
     policy_params['angle_dims'] = angi
     policy_params['n_inducing'] = 20
-    policy_params['maxU'] = [2.5]
+    #policy_params['maxU'] = [2.5]
+    policy_params['maxU'] = [1.]#gym
 
     # dynamics model parameters
     dynmodel_params = {}
@@ -50,7 +48,8 @@ def default_params():
     # cost function parameters
     cost_params = {}
     cost_params['angle_dims'] = angi
-    cost_params['target'] = [np.pi, 0]
+    #cost_params['target'] = [np.pi, 0]
+    cost_params['target'] = [.45, 0]
     cost_params['cw'] = 0.5
     cost_params['expl'] = 0.0
     cost_params['pole_length'] = plant_params['pole_length']
@@ -66,9 +65,13 @@ def default_params():
     params = {}
     params['state0_dist'] = p0
     params['angle_dims'] = angi
-    params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    params['discount'] = 1.0                           # discount factor
+    #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+
+    params['min_steps'] = 1000
+    params['max_steps'] = 1000
+
+    params['discount'] = .995
     params['plant'] = plant_params
     params['policy'] = policy_params
     params['dynamics_model'] = dynmodel_params
@@ -87,15 +90,20 @@ def pendulum_loss(mx, Sx,
     # size of target vector (and mx) after replacing angles with their
     # (sin, cos) representation:
     # [x1,x2,..., angle,...,xn] -> [x1,x2,...,xn, sin(angle), cos(angle)]
-    Da = np.array(target).size + len(angle_dims)
+    #Da = np.array(target).size + len(angle_dims)
 
     # build cost scaling function
+    '''
     Q = np.zeros((Da, Da))
     Q[0, 0] = 1
     Q[0, -2] = pole_length
     Q[-2, 0] = pole_length
     Q[-2, -2] = pole_length**2
     Q[-1, -1] = pole_length**2
+    '''
+    cw = [.05]
+    Q = np.zeros([2, 2])
+    Q[0, 0] = 1.
 
     return cost.distance_based_cost(
         mx, Sx, target, Q, cw, angle_dims=angle_dims, *args, **kwargs)
@@ -121,14 +129,14 @@ class Pendulum(plant.ODEPlant):
         self.g = gravity
 
         # initial state
-        if state0_dist is None:
-            self.state0_dist = utils.distributions.Gaussian(
-                [0, 0, 0, 0], (0.1**2)*np.eye(4))
-        else:
-            self.state0_dist = state0_dist
+#        if state0_dist is None:
+#            self.state0_dist = utils.distributions.Gaussian(
+#                [0, 0, 0, 0], (0.1**2)*np.eye(4))
+#        else:
+#            self.state0_dist = state0_dist
 
         # pointer to the class that will draw the state of the carpotle system
-        self.renderer = None
+#        self.renderer = None
 
         # 4 state dims (x ,x_dot, theta_dot, theta)
         o_lims = np.array([10 for i in range(4)])
@@ -136,6 +144,19 @@ class Pendulum(plant.ODEPlant):
         # 1 action dim (x_force)
         a_lims = np.array([np.finfo(np.float).max for i in range(1)])
         self.action_space = spaces.Box(-a_lims, a_lims)
+
+
+        #The actual mountain car parameters
+        self.min_action = -1.0
+        self.max_action = 1.0
+        self.min_position = -1.2
+        self.max_position = 0.6
+        self.max_speed = 0.07
+        self.goal_position = 0.45 # was 0.5 in gym, 0.45 in Arnaud de Broissia's version
+        self.power = 0.0015
+
+        self.low_state = np.array([self.min_position, -self.max_speed])
+        self.high_state = np.array([self.max_position, self.max_speed])
 
     def dynamics(self, t, z):
         l, m, b, g = self.l, self.m, self.b, self.g
@@ -148,10 +169,38 @@ class Pendulum(plant.ODEPlant):
 
         return dz
 
+
+
+    def step(self, action):
+
+        position = self.state[0]
+        velocity = self.state[1]
+        force = min(max(action[0], -1.0), 1.0)
+
+        velocity += force*self.power -0.0025 * math.cos(3*position)
+        if (velocity > self.max_speed): velocity = self.max_speed
+        if (velocity < -self.max_speed): velocity = -self.max_speed
+        position += velocity
+        if (position > self.max_position): position = self.max_position
+        if (position < self.min_position): position = self.min_position
+        if (position==self.min_position and velocity<0): velocity = 0
+
+        done = bool(position >= self.goal_position)
+
+        reward = 0
+        if done:
+            reward = 100.0
+        reward-= math.pow(action[0],2)*0.1
+
+        self.state = np.array([position, velocity])
+        return self.state.copy(), -reward, done, {}
+
     def reset(self):
-        state0 = self.state0_dist()
-        self.set_state(state0)
-        return self.state
+#        state0 = self.state0_dist()
+#        self.set_state(state0)
+#        return self.state
+        self.state = np.array([np.random.uniform(low=-0.6, high=-0.4), 0])
+        return self.state.copy()
 
     def render(self, mode='human', close=False):
         if self.renderer is None:

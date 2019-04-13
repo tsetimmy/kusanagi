@@ -335,6 +335,9 @@ if __name__ == '__main__':
     # prepare experiment parameters
     scenario_params, pol, dyn, learner_setup = get_scenario(e_id, **kwargs)
     params, loss_kwargs, polopt_kwargs, extra_inps = scenario_params
+    params['n_rnd'] = 1
+    params['n_opt'] = 200
+    params['n_init'] = 0
     if args.horizon:
         params['min_steps'] = args.horizon
     # init environment

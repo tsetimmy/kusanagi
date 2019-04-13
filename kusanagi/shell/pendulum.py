@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from kusanagi.shell import plant
 from kusanagi.shell import cost
 from kusanagi import utils
+import math
 
 
 def default_params():

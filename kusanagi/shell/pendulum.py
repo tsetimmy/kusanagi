@@ -33,8 +33,10 @@ def default_params():
     plant_params['dt'] = 0.1
     plant_params['pole_length'] = 1.0
     plant_params['pole_mass'] = 1.0
-    plant_params['friction'] = 0.01
-    plant_params['gravity'] = 9.82
+    #plant_params['friction'] = 0.01
+    plant_params['friction'] = 0.
+    #plant_params['gravity'] = 9.82
+    plant_params['gravity'] = 10.
     plant_params['state0_dist'] = p0
     plant_params['noise_dist'] = utils.distributions.Gaussian(
         np.zeros((p0.dim,)),
@@ -76,9 +78,9 @@ def default_params():
     params['angle_dims'] = angi
     #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
     #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    params['min_steps'] = 200
-    params['max_steps'] = 200
-    params['discount'] = 1.0                           # discount factor
+    params['min_steps'] = 35
+    params['max_steps'] = 35
+    params['discount'] = .995                           # discount factor
 
     params['plant'] = plant_params
     params['policy'] = policy_params
@@ -176,7 +178,6 @@ class Pendulum(plant.ODEPlant):
         dz[1] = 3*(f - b*z[1] - 0.5*a1*g*np.sin(z[0]))/(a1*l)  # dtheta/dt
 
         return dz
-
 
     def step(self,u):
         th, thdot = self.state # th := theta

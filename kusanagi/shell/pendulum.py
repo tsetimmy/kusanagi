@@ -69,8 +69,8 @@ def default_params():
     #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
     #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
 
-    params['min_steps'] = 1000
-    params['max_steps'] = 1000
+    params['min_steps'] = 120
+    params['max_steps'] = 120
 
     params['discount'] = .995
     params['plant'] = plant_params

@@ -41,7 +41,7 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
     data = []
 
     # do rollout
-    for t in range(max_steps):
+    for t in range(999):
         # preprocess state
         x_t_ = preprocess(x_t) if callable(preprocess) else x_t
 

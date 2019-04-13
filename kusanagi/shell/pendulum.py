@@ -73,10 +73,10 @@ def default_params():
     #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
     #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
 
-    params['min_steps'] = 200
-    params['max_steps'] = 200
+    params['min_steps'] = 35
+    params['max_steps'] = 35
 
-    params['discount'] = 1.0                           # discount factor
+    params['discount'] = .995                           # discount factor
     params['plant'] = plant_params
     params['policy'] = policy_params
     params['dynamics_model'] = dynmodel_params

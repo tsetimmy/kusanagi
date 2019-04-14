@@ -12,7 +12,6 @@ from kusanagi.shell import plant
 from kusanagi.shell import cost
 from kusanagi import utils
 
-
 def default_params():
     # setup learner parameters
     angi = [0]
@@ -73,10 +72,10 @@ def default_params():
     #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
     #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
 
-    params['min_steps'] = 200
-    params['max_steps'] = 200
+    params['min_steps'] = 35
+    params['max_steps'] = 35
 
-    params['discount'] = 1.0                           # discount factor
+    params['discount'] = .995                           # discount factor
     params['plant'] = plant_params
     params['policy'] = policy_params
     params['dynamics_model'] = dynmodel_params
@@ -128,8 +127,8 @@ class Pendulum(plant.ODEPlant):
         self.b = friction
         self.g = gravity
 
-        #self.max_torque = 2.
-        #self.max_speed = 8.
+        self.max_torque = 2.
+        self.max_speed = 8.
 
         # initial state
         if state0_dist is None:
@@ -163,38 +162,55 @@ class Pendulum(plant.ODEPlant):
         return dz
 
     def reset(self):
-        state0 = self.state0_dist()
-        self.set_state(state0)
-        return self.state
+        #state0 = self.state0_dist()
+        #self.set_state(state0)
+        #return self.state
 
-    '''
+        #high = np.array([np.pi, 1])
+        #self.set_state(np.random.uniform(low=-high, high=high))
+        #return self.state
+
+        #high = np.array([np.pi, 1])
+        #self.state = np.random.uniform(low=-high, high=high)
+        #return self.state.copy()
+
+        state0 = self.state0_dist()
+        self.state = state0[0]
+        return self.state.copy()
+
     def step(self,u):
         if u[0] <= -self.max_torque or u[0] >= self.max_torque:
             print ('warning: action exeeds torque')
-        th, thdot = self.state_gym # th := theta
 
-        g = 10.
-        m = 1.
-        l = 1.
+        th, thdot = self.state
+        g = self.g
+        m = self.m
+        l = self.l
         dt = self.dt
 
         u = np.clip(u, -self.max_torque, self.max_torque)[0]
-        self.last_u = u # for rendering
-        costs = angle_normalize(th)**2 + .1*thdot**2 + .001*(u**2)
+        #self.last_u = u # for rendering
+        ang = angle_normalize(th)
+        if ang >= 0:
+            ang = -(np.pi - ang)
+        else:
+            ang = np.pi + ang
+        #print (th, ang)
+        costs = ang**2 + .1*thdot**2 + .001*(u**2)
 
-        newthdot = thdot + (-3*g/(2*l) * np.sin(th + np.pi) + 3./(m*l**2)*u) * dt
+        #newthdot = thdot + (-3*g/(2*l) * np.sin(th + np.pi) + 3./(m*l**2)*u) * dt
+        newthdot = thdot + (-3*g/(2*l) * np.sin(th) + 3./(m*l**2)*u) * dt
         newth = th + newthdot*dt
         if newthdot <= -self.max_speed or newthdot >= self.max_speed:
             print ('warning: newthdot exceeds max speed')
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed) #pylint: disable=E1111
 
-        self.state_gym = np.array([newth, newthdot])
-        theta, thetadot = self.state_gym
-        self.state = np.array([theta+np.pi, thetadot])
+        self.state = np.array([newth, newthdot])
 
-        return self._get_obs(), costs, False, {}
+        return self.state.copy(), costs, False, {}
 
 
+    '''
     def _get_obs(self):
         return self.state
         #theta, thetadot = self.state
@@ -251,5 +267,5 @@ class PendulumDraw(plant.PlantDraw):
 
         return (self.pole_line, self.mass_circle)
 
-
-
+def angle_normalize(x):
+    return (((x+np.pi) % (2*np.pi)) - np.pi)

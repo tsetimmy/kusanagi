@@ -104,6 +104,15 @@ class ODEPlant(Plant):
         self.t = self.solver.t
 
     def step(self, action):
+        state = self.state
+        ang = angle_normalize(state[0])
+        if ang >= 0:
+            ang = -(np.pi - ang)
+        else:
+            ang = np.pi + ang
+        cost = ang**2 + .1*state[1]**2 + .001*action[0]**2
+        print (state[1], ang)
+
         self.apply_control(action)
         dt = self.dt
         t1 = self.solver.t + dt
@@ -111,17 +120,13 @@ class ODEPlant(Plant):
             self.solver.integrate(self.solver.t + dt)
         self.state = np.array(self.solver.y)
         self.t = self.solver.t
+
+        '''
         cost = None
         if self.loss_func is not None:
             cost = self.loss_func(np.array(self.state)[None, :])
-        state, t = self.get_state()
-        ang = angle_normalize(state[0])
-        if ang >= 0:
-            ang = -(np.pi - ang)
-        else:
-            ang = np.pi + ang
-        cost = ang**2 + .1*state[1]**2 + .001*action[0]**2
-        #print (ang, state[1], action, cost)
+        '''
+        state, t = self.get_state(noisy=False)
         return state, cost, False, dict(t=t)
 
     def dynamics(self, *args, **kwargs):

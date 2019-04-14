@@ -15,14 +15,8 @@ from kusanagi import utils
 
 def default_params():
     # setup learner parameters
-    high = np.array([np.pi, 1.])
-    th, thdot = np.random.uniform(low=-high, high=high)
-
-
-    angi = []
-    #angi = None
-    #x0 = np.array([0, 0])
-    x0 = np.array([np.cos(th), np.sin(th), thdot])
+    angi = [0]
+    x0 = np.array([0, 0])
     S0 = np.eye(len(x0))*(0.2**2)
     p0 = utils.distributions.Gaussian(x0, S0)
     x0a, S0a = utils.gTrig2_np(x0[None, :], np.array(S0)[None, :, :],
@@ -30,7 +24,8 @@ def default_params():
 
     # plant parameters
     plant_params = {}
-    plant_params['dt'] = 0.1
+    #plant_params['dt'] = 0.1
+    plant_params['dt'] = 0.05
     plant_params['pole_length'] = 1.0
     plant_params['pole_mass'] = 1.0
     #plant_params['friction'] = 0.01
@@ -48,7 +43,7 @@ def default_params():
     policy_params['angle_dims'] = angi
     policy_params['n_inducing'] = 20
     #policy_params['maxU'] = [2.5]
-    policy_params['maxU'] = [2]
+    policy_params['maxU'] = [2.]
 
     # dynamics model parameters
     dynmodel_params = {}
@@ -59,8 +54,8 @@ def default_params():
     # cost function parameters
     cost_params = {}
     cost_params['angle_dims'] = angi
-    #cost_params['target'] = [np.pi, 0]
-    cost_params['target'] = [1., 0., 0.]
+    cost_params['target'] = [np.pi, 0]
+    #cost_params['target'] = [1., 0., 0.]
     cost_params['cw'] = 0.5
     cost_params['expl'] = 0.0
     cost_params['pole_length'] = plant_params['pole_length']
@@ -100,21 +95,19 @@ def pendulum_loss(mx, Sx,
     # size of target vector (and mx) after replacing angles with their
     # (sin, cos) representation:
     # [x1,x2,..., angle,...,xn] -> [x1,x2,...,xn, sin(angle), cos(angle)]
-    #Da = np.array(target).size + len(angle_dims)
+    Da = np.array(target).size + len(angle_dims)
 
-    target = np.array([1., 0., 0.])
-    angle_dims = None
-    Q = np.eye(len(target))
+    #target = np.array([1., 0., 0.])
+    #angle_dims = None
+    #Q = np.eye(len(target))
 
     # build cost scaling function
-    '''
     Q = np.zeros((Da, Da))
     Q[0, 0] = 1
     Q[0, -2] = pole_length
     Q[-2, 0] = pole_length
     Q[-2, -2] = pole_length**2
     Q[-1, -1] = pole_length**2
-    '''
 
     return cost.distance_based_cost(
         mx, Sx, target, Q, cw, angle_dims=angle_dims, *args, **kwargs)
@@ -209,7 +202,8 @@ class Pendulum(plant.ODEPlant):
     
     def _get_obs(self):
         theta, thetadot = self.state
-        return np.array([np.cos(theta), np.sin(theta), thetadot])
+        return np.array([theta+np.pi, thetadot])
+        #return np.array([np.cos(theta), np.sin(theta), thetadot])
 
     def render(self, mode='human', close=False):
         if self.renderer is None:

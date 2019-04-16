@@ -301,8 +301,6 @@ def run_pilco_experiment(env, cost, exp_setup=setup_mc_pilco_experiment,
         apply_controller(env, pol, H,
                          preprocess=gTrig, callback=step_cb_internal)
 
-        print ("Stepping through the environment with 200 time-steps:")
-        apply_controller(env, pol, H, preprocess=gTrig, override=200)
         # 4. train dynamics once
         train_dynamics(dyn, exp, angle_dims=angle_dims,
                        max_dataset_size=max_dataset_size)

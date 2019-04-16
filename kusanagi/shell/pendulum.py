@@ -23,8 +23,8 @@ def default_params():
 
     # plant parameters
     plant_params = {}
-    plant_params['dt'] = 0.05
-    #plant_params['dt'] = 0.1
+    #plant_params['dt'] = 0.05
+    plant_params['dt'] = 0.1
     plant_params['pole_length'] = 1.0
     plant_params['pole_mass'] = 1.0
     plant_params['friction'] = 0.00
@@ -41,8 +41,8 @@ def default_params():
     policy_params['state0_dist'] = p0
     policy_params['angle_dims'] = angi
     policy_params['n_inducing'] = 20
-    policy_params['maxU'] = [2.]
-    #policy_params['maxU'] = [2.5]
+    #policy_params['maxU'] = [2.]
+    policy_params['maxU'] = [2.5]
 
     # dynamics model parameters
     dynmodel_params = {}
@@ -69,13 +69,13 @@ def default_params():
     params = {}
     params['state0_dist'] = p0
     params['angle_dims'] = angi
-    #params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
-    #params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    params['min_steps'] = int(4.0/plant_params['dt'])  # control horizon
+    params['max_steps'] = int(4.0/plant_params['dt'])  # control horizon
 
-    params['min_steps'] = 35
-    params['max_steps'] = 35
+    #params['min_steps'] = 35
+    #params['max_steps'] = 35
 
-    params['discount'] = .995                           # discount factor
+    params['discount'] = 1.0                           # discount factor
     params['plant'] = plant_params
     params['policy'] = policy_params
     params['dynamics_model'] = dynmodel_params
@@ -162,9 +162,9 @@ class Pendulum(plant.ODEPlant):
         return dz
 
     def reset(self):
-        #state0 = self.state0_dist()
-        #self.set_state(state0)
-        #return self.state
+        state0 = self.state0_dist()
+        self.set_state(state0)
+        return self.state
 
         #high = np.array([np.pi, 1])
         #self.set_state(np.random.uniform(low=-high, high=high))
@@ -174,10 +174,11 @@ class Pendulum(plant.ODEPlant):
         #self.state = np.random.uniform(low=-high, high=high)
         #return self.state.copy()
 
-        state0 = self.state0_dist()
-        self.state = state0[0]
-        return self.state.copy()
+        #state0 = self.state0_dist()
+        #self.state = state0[0]
+        #return self.state.copy()
 
+    '''
     def step(self,u):
         if u[0] <= -self.max_torque or u[0] >= self.max_torque:
             print ('warning: action exeeds torque')
@@ -208,6 +209,7 @@ class Pendulum(plant.ODEPlant):
         self.state = np.array([newth, newthdot])
 
         return self.state.copy(), costs, False, {}
+    '''
 
 
     '''

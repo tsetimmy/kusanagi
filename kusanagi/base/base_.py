@@ -8,7 +8,7 @@ def preprocess_angles(x_t, angle_dims=[]):
     return x_t_
 
 
-def apply_controller(env, policy, max_steps, preprocess=None, callback=None, override=None):
+def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
     '''
         Starts the env and applies the current policy to the env for a duration
         specified by H (in seconds). If  H is not set, it will run for self.H
@@ -41,11 +41,9 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None, ove
     data = []
 
     # do rollout
-    if override is not None:
-        max_steps = override
-    for t in range(max_steps):
+    #for t in range(max_steps):
     #for t in range(35):
-    #for t in range(200):
+    for t in range(200):
         # preprocess state
         x_t_ = preprocess(x_t) if callable(preprocess) else x_t
 

@@ -111,7 +111,7 @@ class ODEPlant(Plant):
         else:
             ang = np.pi + ang
         cost = ang**2 + .1*state[1]**2 + .001*action[0]**2
-        print (state[1], ang)
+        #print (state[1], ang)
 
         self.apply_control(action)
         dt = self.dt

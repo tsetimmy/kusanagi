@@ -8,7 +8,7 @@ def preprocess_angles(x_t, angle_dims=[]):
     return x_t_
 
 
-def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
+def apply_controller(env, policy, max_steps, preprocess=None, callback=None, random=False):
     '''
         Starts the env and applies the current policy to the env for a duration
         specified by H (in seconds). If  H is not set, it will run for self.H
@@ -34,7 +34,7 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
         utils.print_with_stamp('Running for %f seconds' % (H), fnname)
     else:
         utils.print_with_stamp('Running for %d steps' % (max_steps), fnname)
-    x_t = env.reset()
+    x_t = env.reset(random=random)
 
     # data corresponds to state at time t, action at time t, reward after
     # applying action at time t

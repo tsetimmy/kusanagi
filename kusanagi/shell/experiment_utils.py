@@ -221,7 +221,7 @@ def run_pilco_experiment(env, cost, exp_setup=setup_mc_pilco_experiment,
         utils.print_with_stamp('Executing uniformly-random controls')
         apply_controller(env, randpol, H,
                          preprocess=gTrig,
-                         callback=step_cb_internal)
+                         callback=step_cb_internal, random=True)
 
     for i in range(n_init):
         exp.new_episode()

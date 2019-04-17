@@ -161,22 +161,24 @@ class Pendulum(plant.ODEPlant):
 
         return dz
 
-    def reset(self):
-        state0 = self.state0_dist()
-        self.set_state(state0)
-        return self.state
+    def reset(self, random):
+        if random == False:
+            state0 = self.state0_dist()
+            self.set_state(state0)
+            return self.state
+        else:
 
-        #high = np.array([np.pi, 1])
-        #self.set_state(np.random.uniform(low=-high, high=high))
-        #return self.state
+            high = np.array([np.pi, 1])
+            self.set_state(np.random.uniform(low=-high, high=high))
+            return self.state
 
-        #high = np.array([np.pi, 1])
-        #self.state = np.random.uniform(low=-high, high=high)
-        #return self.state.copy()
+            #high = np.array([np.pi, 1])
+            #self.state = np.random.uniform(low=-high, high=high)
+            #return self.state.copy()
 
-        #state0 = self.state0_dist()
-        #self.state = state0[0]
-        #return self.state.copy()
+            #state0 = self.state0_dist()
+            #self.state = state0[0]
+            #return self.state.copy()
 
     '''
     def step(self,u):

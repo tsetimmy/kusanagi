@@ -43,7 +43,8 @@ def apply_controller(env, policy, max_steps, preprocess=None, callback=None):
     scalar_costs = 0.
     # do rollout
     #for t in range(200):
-    for t in range(35):
+    #for t in range(35):
+    for t in range(env.env._max_episode_steps):
         # preprocess state
         x_t_ = preprocess(x_t) if callable(preprocess) else x_t
 

@@ -14,7 +14,10 @@ import theano
 from functools import partial
 from kusanagi import utils
 from kusanagi.ghost import regression, control
-from kusanagi.shell import experiment_utils, pendulum
+from kusanagi.shell import experiment_utils
+#from kusanagi.shell.invertedpendulum import pendulum
+#from kusanagi.shell.invertedpendulum import pendulum
+
 
 # np.random.seed(1)
 np.set_printoptions(linewidth=500)
@@ -328,9 +331,18 @@ if __name__ == '__main__':
     parser.add_argument(
         '-k', '--kwarg', nargs=2, action='append', default=[],
         help='additional arguments for the experiment [name value]')
+
+    parser.add_argument('--env', type=str, choices=['inverted', 'inverteddouble'], default='inverted')
+
+
     args = parser.parse_args()
     e_id = args.exp
     kwargs = dict(args.kwarg)
+
+    if args.env == 'inverted':
+        from kusanagi.shell import invertedpendulum as pendulum
+    elif args.env == 'inverteddouble':
+        from kusanagi.shell import inverteddoublependulum as pendulum
 
     # prepare experiment parameters
     scenario_params, pol, dyn, learner_setup = get_scenario(e_id, **kwargs)
@@ -343,7 +355,7 @@ if __name__ == '__main__':
     env = pendulum.Pendulum(loss_func=cost, **params['plant'])
 
     params['n_rnd'] = 3
-    params['n_opt'] = 200
+    params['n_opt'] = 1000
     params['n_init'] = 0
 
     # initialize output directory

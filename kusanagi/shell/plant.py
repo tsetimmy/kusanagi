@@ -89,9 +89,11 @@ class ODEPlant(Plant):
         rtol = kwargs.get('rtol', 1e-12)
 
         # initialize ode solver
+        '''
         self.solver = ode(self.dynamics).set_integrator(integrator,
                                                         atol=atol,
                                                         rtol=rtol)
+        '''
 
     def set_state(self, state):
         assert False
@@ -120,7 +122,7 @@ class ODEPlant(Plant):
 
     def dynamics(self, *args, **kwargs):
         msg = "You need to implement self.dynamics in the ODEPlant subclass."
-        raise NotImplementedError(msg)
+        #raise NotImplementedError(msg)
 
 
 
